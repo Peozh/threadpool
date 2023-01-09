@@ -62,7 +62,9 @@ private:
                     }
                     this->availableWorkerCount.fetch_add(1);
                     this->cvThreadRelease.notify_one();
-                    this->cvThreadPoolWait.wait(ul , [this]{ return !this->tasks.empty() || this->state == TP_TERMINATING; }); // task exist, or in thread terminating step, it is valid wake up
+                    this->cvThreadPoolWait.wait(ul , [this]{ 
+                        return !this->tasks.empty() || this->state == TP_TERMINATING; 
+                    }); // task exist, or in thread terminating step, it is valid wake up
                     this->availableWorkerCount.fetch_sub(1);
                     {
                         std::lock_guard<std::mutex> lg(this->mtxCout);
@@ -77,7 +79,6 @@ private:
                             this->tasks.pop();
                             this->cvTaskAssign.notify_one();
                         }
-                        
                         {
                             std::lock_guard<std::mutex> lg(this->mtxCout);
                             std::cout << "\tthread "  << std::this_thread::get_id() << " tasking..." << std::endl;
@@ -127,7 +128,11 @@ private:
             std::cout << "all task assigned" << std::endl;
         }
         std::unique_lock<std::mutex> ul2(this->mtxThreadRelease);
-        if (this->availableWorkerCount.load() != this->threadCount) cvThreadRelease.wait(ul2, [this] { return this->availableWorkerCount.load() == this->threadCount; }); // awake when all task done (terminatable)
+        if (this->availableWorkerCount.load() != this->threadCount) {
+            cvThreadRelease.wait(ul2, [this] { 
+                return this->availableWorkerCount.load() == this->threadCount; 
+            }); // awake when all task done (terminatable)
+        }
         this->state = TP_TASK_DONE;
         this->state = TP_TERMINATING;
         cvThreadPoolWait.notify_all(); // notify all threads to terminate
@@ -135,7 +140,11 @@ private:
             std::lock_guard<std::mutex> lg(this->mtxCout);
             std::cout << "all task done" << std::endl;
         }
-        if (this->terminatedWorkerCount.load() != this->threadCount) cvThreadRelease.wait(ul2, [this] { return this->terminatedWorkerCount.load() == this->threadCount; }); // awake when all thread terminated
+        if (this->terminatedWorkerCount.load() != this->threadCount) {
+            cvThreadRelease.wait(ul2, [this] { 
+                return this->terminatedWorkerCount.load() == this->threadCount; 
+            }); // awake when all thread terminated
+        }
         this->state = TP_TERMINATED;
         {
             std::lock_guard<std::mutex> lg(this->mtxCout);
@@ -160,8 +169,4 @@ public:
             std::cout << "\t\t\ttask pushed" << std::endl;
         }
     }
-
-    
-    
-
 };
