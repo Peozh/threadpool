@@ -13,18 +13,16 @@ class ReturnObjectDelivery
 {
 private:
 public:
-    T returnValue;
     std::vector<ReturnObject<T>*> pROs;
     
 public:
 
     void set_value(T& value) 
     {
-        this->returnValue = value;
         for (ReturnObject<T>* pRO : pROs)
         {
             if (pRO == nullptr) continue;
-            pRO->returnValue = this->returnValue;
+            pRO->returnValue = value;
             pRO->returned = true;
             pRO->cvReturnWait.notify_one();
         }

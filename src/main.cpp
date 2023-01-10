@@ -16,7 +16,7 @@ void func(int a, int b, std::mutex* mtxCout)
 }
 
 template <typename T>
-void func_future(ReturnObjectDelivery<T>& promise, T a, T b, std::mutex* mtxCout)
+void func_future(ReturnObjectDelivery<T> promise, T a, T b, std::mutex* mtxCout)
 {
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(30ms);
@@ -70,7 +70,8 @@ int main(int argc, char** argv)
             ReturnObjectDelivery<int> promise;
             returnObjects[i].connectROD(&promise);
 
-            std::function<void()> task = std::bind(func_future<int>, promise, a, b, &(tp.mtxCout));
+            // std::function<void()> task = std::bind(func_future<int>, promise, a, b, &(tp.mtxCout));
+            std::function<void()> task = [promise, a, b, &tp]() { func_future<int>(promise, a, b, &(tp.mtxCout)); };
             tp.pushTask(task);
         }
 
