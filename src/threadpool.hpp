@@ -100,7 +100,7 @@ private:
             thread.detach();
             {
                 std::lock_guard<std::mutex> lg(this->mtxCout);
-                std::cout << "thread " << i + 1 << " generated & detached" << std::endl;
+                std::cout << "thread idx = " << i << " generated & detached" << std::endl;
             }
         }
         this->state = TP_READY;
