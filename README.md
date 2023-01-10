@@ -13,12 +13,12 @@ void func(...)
 constexpr int threadCount = 4;
 ThreadPool tp(threadCount);
 ```
-#### bind version
+#### push task (bind version)
 ```c++
 std::function<void()> task = std::bind(func, ...);
 tp.pushTask(task);
 ```
-#### lambda version
+#### push task (lambda version)
 ```c++
 tp.pushTask(std::function<void()> { [](){ ... } });
 ```
@@ -42,7 +42,7 @@ ThreadPool tp(threadCount);
 
 std::vector<ReturnObject<int>> returnObjects(taskCount);
 ```
-#### bind version
+#### push task (bind version)
 ```c++
 ReturnObjectDelivery<int> promise;
 returnObjects[i].connectROD(&promise);
@@ -50,7 +50,7 @@ returnObjects[i].connectROD(&promise);
 std::function<void()> task = std::bind(func_future<int>, promise, ...);
 tp.pushTask(task);
 ```
-#### lambda version
+#### push task (lambda version)
 ```c++
 ReturnObjectDelivery<int> promise;
 returnObjects[i].connectROD(&promise);
@@ -58,6 +58,7 @@ returnObjects[i].connectROD(&promise);
 std::function<void()> task = [promise, ...]() { func_future<int>(promise, ...); };
 tp.pushTask(task);
 ```
+#### get return value
 ```c++
 int ret = returnObjects[idx].get();
 ```
