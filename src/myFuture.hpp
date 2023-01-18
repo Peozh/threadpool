@@ -45,7 +45,7 @@ public:
     ReturnObject(const ReturnObject&) = delete;
 
 
-    void connectROD(ReturnObjectDelivery<T>* _pROD) 
+    void connectToROD(ReturnObjectDelivery<T>* _pROD) 
     { 
         if (_pROD == nullptr) return;
         this->connected = true;
