@@ -23,7 +23,7 @@ tp.pushTask(task);
 tp.pushTask(std::function<void()> { [](){ ... } });
 ```
 
-## 2. Custom Version - future & promise
+## 2. Custom Version - custom future & promise
 ```c++
 #include "threadpool.hpp"
 #include "myFuture.hpp"
