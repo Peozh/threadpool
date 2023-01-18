@@ -138,21 +138,20 @@ int main(int argc, char **argv)
             */
             auto sp_packaged_task = std::make_shared<std::packaged_task<int()>>(
                 std::bind(func_std_package<int>, a, b, &(tp.mtxCout)));
-            std::future<int> future = sp_packaged_task->get_future();
-            futures.emplace_back(std::move(future));
 
-            std::function<void()> task = [sp_packaged_task]()
-            { (*sp_packaged_task)(); };
+            futures.emplace_back(sp_packaged_task->get_future());
+
+            std::function<void()> task = [sp_packaged_task](){ (*sp_packaged_task)(); };
             tp.pushTask(task);
         }
 
         // print return value
         for (int idx = 0; idx < futures.size(); ++idx)
         {
-            auto &&a = futures[idx].get();
+            auto ret = futures[idx].get();
             {
                 std::lock_guard<std::mutex> lg(tp.mtxCout);
-                std::cout << "task " << idx + 1 << " return value = " << a << std::endl;
+                std::cout << "task " << idx + 1 << " return value = " << ret << std::endl;
             }
         }
     }
