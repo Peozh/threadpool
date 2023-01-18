@@ -1,7 +1,7 @@
 # threadpool
 my threadpool with condition_variable, mutex, unique_lock, lock_guard, atomic
 
-## No future object
+## 1. Naive Version
 ```c++
 #include "threadpool.hpp"
 
@@ -13,26 +13,26 @@ void func(...)
 constexpr int threadCount = 4;
 ThreadPool tp(threadCount);
 ```
-#### push task (bind version)
+#### push task (with bind)
 ```c++
 std::function<void()> task = std::bind(func, ...);
 tp.pushTask(task);
 ```
-#### push task (lambda version)
+#### push task (with lambda)
 ```c++
 tp.pushTask(std::function<void()> { [](){ ... } });
 ```
 
-## With future object
+## 2. Custom Version - custom future & promise
 ```c++
 #include "threadpool.hpp"
 #include "myFuture.hpp"
 
 template <typename T>
-void func_future(ReturnObjectDelivery<T> promise, ...)
+void func_my_promise(ReturnObjectDelivery<T> promise, ...)
 {
     ...
-    T ret = a+b;
+    T ret = a + b;
     promise.set_value(ret);
 }
 
@@ -40,29 +40,62 @@ constexpr int threadCount = 4;
 constexpr int taskCount = 4;
 ThreadPool tp(threadCount);
 
-std::vector<ReturnObject<int>> returnObjects(taskCount);
+std::vector<ReturnObject<int>> futures(taskCount);
 ```
-#### push task (bind version)
+#### push task (with bind)
 ```c++
 ReturnObjectDelivery<int> promise;
-returnObjects[i].connectROD(&promise);
+futures[i].connectToROD(&promise);
 
-std::function<void()> task = std::bind(func_future<int>, promise, ...);
+std::function<void()> task = std::bind(func_my_promise<int>, promise, ...);
 tp.pushTask(task);
 ```
-#### push task (lambda version)
+#### push task (with lambda)
 ```c++
 ReturnObjectDelivery<int> promise;
-returnObjects[i].connectROD(&promise);
+futures[i].connectToROD(&promise);
 
-std::function<void()> task = [promise, ...]() { func_future<int>(promise, ...); };
+std::function<void()> task = [promise, ...]() { func_my_promise<int>(promise, ...); };
 tp.pushTask(task);
 ```
 #### get return value
 ```c++
-int ret = returnObjects[idx].get();
+auto ret = futures[idx].get();
 ```
-### Output (with futuer object) [threadCount = 4, taskCount = 4]
+## 3. Standard Version - std::future & std::packaged_task
+```c++
+#include "threadpool.hpp"
+#include <future>
+
+template <typename T>
+T func_std_package(T a, T b, std::mutex *mtxCout)
+{
+    ...
+    T ret = a + b;
+    return ret;
+}
+
+constexpr int threadCount = 4;
+constexpr int taskCount = 4;
+ThreadPool tp(threadCount);
+
+std::vector<std::future<int>> futures;
+```
+#### push task
+```c++
+auto sp_packaged_task = std::make_shared<std::packaged_task<int()>>(
+    std::bind(func_std_package<int>, a, b, &(tp.mtxCout)));
+
+futures.emplace_back(sp_packaged_task->get_future());
+
+std::function<void()> task = [sp_packaged_task](){ (*sp_packaged_task)(); };
+tp.pushTask(task);
+```
+#### get return value
+```c++
+auto ret = futures[idx].get();
+```
+## 4. Example Output [threadCount = 4, taskCount = 4]
 ```shell
 thread idx = 0 generated & detached
         thread 2 starting...
